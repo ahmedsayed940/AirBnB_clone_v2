@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Define MySQL commands
 MYSQL_CMD="mysql -uroot -p"
 
