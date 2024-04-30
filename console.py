@@ -114,55 +114,42 @@ class HBNBCommand(cmd.Cmd):
         pass
 
     def do_create(self, args):
-        """Create an object of any class with given parameters"""
+        """ Create an object of any class"""
+        pattern = """(^\w+)((?:\s+\w+=[^\s]+)+)?"""
+        m = re.match(pattern, args)
+        args = [s for s in m.groups() if s] if m else []
+
         if not args:
             print("** class name missing **")
             return
 
-        # Split arguments into class name and parameters
-        args_list = args.split()
-        class_name = args_list[0]
+        className = args[0]
 
-        if class_name not in HBNBCommand.classes:
+        if className not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
 
-        # Extract parameters
-        params = {}
-        for param in args_list[1:]:
-            # Split parameter into key and value
-            key_value = param.split('=')
-            if len(key_value) != 2:
-                continue  # Skip invalid parameters
-
-            key, value = key_value
-
-            # Replace underscores with spaces in key
-            key = key.replace('_', ' ')
-
-            # Process value based on type
-            if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1]  # Remove double quotes
-                value = value.replace('\\"', '"')  # Unescape escaped quotes
-            elif '.' in value:
-                try:
+        kwargs = dict()
+        if len(args) > 1:
+            params = args[1].split(" ")
+            params = [param for param in params if param]
+            for param in params:
+                [name, value] = param.split("=")
+                if value[0] == '"' and value[-1] == '"':
+                    value = value[1:-1].replace('_', ' ')
+                elif '.' in value:
                     value = float(value)
-                except ValueError:
-                    continue  # Skip invalid float values
-            else:
-                try:
+                else:
                     value = int(value)
-                except ValueError:
-                    continue  # Skip invalid integer values
+                kwargs[name] = value
 
-            # Add parameter to params dictionary
-            params[key] = value
+        new_instance = HBNBCommand.classes[className]()
+        
+        for attrName, attrValue in kwargs.items():
+            setattr(new_instance, attrName, attrValue) 
 
-        # Create instance with parameters
-        new_instance = HBNBCommand.classes[class_name](**params)
-        storage.save()  # Save changes to storage
+        new_instance.save()
         print(new_instance.id)
-        storage.save()
 
     def help_create(self):
         """ Help information for the create method """
